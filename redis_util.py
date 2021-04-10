@@ -35,6 +35,9 @@ class RedisClient(metaclass=Singleton):
 
 if __name__ == "__main__":
     client = RedisClient()
-    client.conn.set('a', 'b')
-    redis_data = client.conn.get('a')
-    print(redis_data)
+    chatroom_list = client.conn.lrange("all_chatroom_list", 0, -1)
+    if chatroom_list:
+        print(list(map(bytes.decode, chatroom_list)))
+    else:
+        print([])
+
