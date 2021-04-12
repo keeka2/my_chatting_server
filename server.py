@@ -30,6 +30,8 @@ class Server:
             self.all_chatroom[chatroom] = True
             self.chat_room_user_id_list[chatroom] = get_people_in_chatroom(chatroom)
         print("all_chat_room : ", all_chatroom)
+        for c in self.chat_room_user_id_list:
+            print(c, self.chat_room_user_id_list[c])
 
     def start(self):
         print("start")
@@ -72,7 +74,7 @@ class Server:
             print(user_id, "made new chat room :", chat_room_id)
             print("all_chat_room : ", self.print_all_chat_room())
         # 처음 참가하는 채팅방
-        elif user_id not in self.all_chatroom:
+        elif user_id not in self.chat_room_user_id_list[chat_room_id]:
             self.chat_room_user_id_list[chat_room_id].append(user_id)
             add_to_my_chatroom_list(user_id, chat_room_id)
             print("new user (", user_id, ") entered chat room :", chat_room_id)
@@ -163,37 +165,3 @@ if __name__ == "__main__":
     except Exception as e:
         print(e)
         server.server_sock.close()
-
-
-# todo - err
-"""
-start
-initiating start data
-all_chat_room :  ['12']
-<socket.socket fd=5, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=0, laddr=('127.0.0.1', 9000), raddr=('127.0.0.1', 65496)> init_data_request
-1 entered ... send init data
-send data: {'status': 'init_data_request', 'user_id': '1', 'chat_room_list': ['12', '12', '12', '12'], 'chat_room_msg_dict': {'1': []}}
-{'1': <socket.socket fd=5, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=0, laddr=('127.0.0.1', 9000), raddr=('127.0.0.1', 65496)>}
-<socket.socket fd=5, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=0, laddr=('127.0.0.1', 9000), raddr=('127.0.0.1', 65496)> change_chat_room
-new user ( 1 ) entered chat room : 12
-send data: {'status': 'change_chat_room', 'user_id': '1', 'msg': '====entered 12====='}
-<socket.socket fd=5, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=0, laddr=('127.0.0.1', 9000), raddr=('127.0.0.1', 65496)> send_message
-[room_id:12/u_id:1]: hi
-send data: {'status': 'send_message', 'user_id': '1', 'msg': 'hi', 'chat_room_id': '12'}
-12 ['1', '2', '1', '1', '2', '1', '3', '4', '4', '1'] {"status": "send_message", "user_id": "1", "msg": "hi", "chat_room_id": "12"};
-
-
-
-my user id(int):1
-Connecting to  127.0.0.1 9000
-my chat room list: []
-select or make new chat room(int):><><>< {"status": "init_data_request", "user_id": "1", "chat_room_list": ["12", "12", "12", "12"], "chat_room_msg_dict": {"1": []}};
-12
-entered 12
-if you want to change chat room input *exit* and press enter
-><><>< {"status": "change_chat_room", "user_id": "1", "msg": "====entered 12====="};
-hi
-1 : hi
-><><>< {"status": "send_message", "user_id": "1", "msg": "hi", "chat_room_id": "12"};{"status": "send_message", "user_id": "1", "msg": "hi", "chat_room_id": "12"};{"status": "send_message", "user_id": "1", "msg": "hi", "chat_room_id": "12"};{"status": "send_message", "user_id": "1", "msg": "hi", "chat_room_id": "12"};{"status": "send_message", "user_id": "1", "msg": "hi", "chat_room_id": "12"};
-1 : hi
-"""

@@ -76,6 +76,7 @@ class Client:
                         for chat_data in self.chat_room_msg_dict[self.cur_chatroom]:
                             print(chat_data["user_id"], ":", chat_data["msg"])
                     else:
+                        self.chat_room_list.append(self.cur_chatroom)
                         self.chat_room_msg_dict[self.cur_chatroom] = []
                 except:
                     print("wrong input retry")
@@ -92,7 +93,6 @@ class Client:
     def receive(self):
         while True:
             received_data = self.client_sock.recv(1024).decode()  # Server -> Client 데이터 수신
-            print("><><><", received_data)
             received_data_json = json.loads(received_data.split(";")[0])
             status = received_data_json["status"]
             if status == Status.INIT_DATA_REQUEST:
