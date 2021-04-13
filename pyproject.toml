@@ -10,6 +10,8 @@ fastapi = "^0.63.0"
 redis = "^3.5.3"
 pymongo = "^3.11.3"
 docopt = "^0.6.2"
+websocket = "^0.2.1"
+websockets = "^8.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"

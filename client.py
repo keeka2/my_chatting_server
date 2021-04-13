@@ -4,6 +4,8 @@ import threading
 import requests
 
 from const import Status
+from data_util.client_request_data import get_change_chat_room_request_data, get_send_message_request_data, \
+    get_init_data_request_data
 
 
 class Client:
@@ -35,27 +37,15 @@ class Client:
         self.client_sock.send(encoded_request_data)  # Client -> Server 데이터 통신
 
     def request_init_data(self):
-        request_data = {
-            "status": Status.INIT_DATA_REQUEST,
-            "user_id": self.user_id,
-        }
+        request_data = get_init_data_request_data(self.user_id)
         self.send_data(request_data)
 
     def change_chat_room(self, chat_room_id):
-        request_data = {
-            "status": Status.CHANGE_CHAT_ROOM,
-            "user_id": self.user_id,
-            "chat_room_id": chat_room_id,
-        }
+        request_data = get_change_chat_room_request_data(self.user_id, chat_room_id)
         self.send_data(request_data)
 
     def send_message(self, msg):
-        request_data = {
-            "status": Status.SEND_MESSAGE,
-            "user_id": self.user_id,
-            "chat_room_id": self.cur_chatroom,
-            "msg": msg,
-        }
+        request_data = get_send_message_request_data(self.user_id, self.cur_chatroom, msg)
         self.send_data(request_data)
         del request_data["chat_room_id"]
         self.chat_room_msg_dict[self.cur_chatroom].append(request_data)
@@ -66,7 +56,7 @@ class Client:
             if not self.cur_chatroom:
                 chat_room_id = input("select or make new chat room(int):")
                 try:
-                    a = int(chat_room_id)
+                    integer_check = int(chat_room_id)
                     self.cur_chatroom = chat_room_id
                     self.change_chat_room(chat_room_id)
 

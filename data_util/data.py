@@ -1,6 +1,15 @@
 import pickle
 
-from redis_util import RedisClient
+from data_util.redis_util import RedisClient
+
+
+def get_all_user():
+    client = RedisClient()
+    all_user = client.conn.lrange("all_user", 0, -1)
+    if all_user:
+        return list(map(bytes.decode, all_user))
+    else:
+        return []
 
 
 def get_all_chatroom():
@@ -41,6 +50,10 @@ def get_my_chatroom_msg_list(chat_room_list):
     return chat_room_msg_list
 
 
+def add_user(user_id):
+    client = RedisClient()
+    client.conn.rpush("all_user", user_id)
+
 def add_to_my_chatroom_list(user_id, chat_room_id):
     client = RedisClient()
     client.conn.rpush(f"{user_id}_chatroom_list", chat_room_id)
@@ -51,4 +64,6 @@ def add_msg_in_chatroom(data):
     client = RedisClient()
     chat_room_id = data["chat_room_id"]
     del data["chat_room_id"]
+    if "status" in data:
+        del data["status"]
     client.conn.rpush(f"{chat_room_id}_chatroom_msg", pickle.dumps(data))

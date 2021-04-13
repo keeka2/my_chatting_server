@@ -4,8 +4,10 @@ import threading
 from queue import Queue
 
 from const import Status
-from data import get_my_chatroom_list, get_my_chatroom_msg_list, add_to_my_chatroom_list, add_msg_in_chatroom, \
+from data_util.data import get_my_chatroom_list, get_my_chatroom_msg_list, add_to_my_chatroom_list, add_msg_in_chatroom, \
     get_all_chatroom, get_people_in_chatroom, add_chatroom
+from data_util.server_response_data import put_init_data_response_data, put_change_chat_room_response_data, \
+    put_send_message_response_data
 
 
 class Server:
@@ -51,12 +53,7 @@ class Server:
 
     def put_init_data_response(self, received_data_json, connection):
         user_id = received_data_json["user_id"]
-        data = {
-            "status": Status.INIT_DATA_REQUEST,
-            "user_id": user_id,
-            "chat_room_list": get_my_chatroom_list(user_id),
-            "chat_room_msg_dict": get_my_chatroom_msg_list(user_id)
-        }
+        data = put_init_data_response_data(user_id)
         self.on_server_client[user_id] = connection
         self.send_queue.put(data)
         print(user_id, "entered", "...", "send init data")
@@ -81,21 +78,12 @@ class Server:
         else:
             print(user_id, "entered chat room :", chat_room_id)
 
-        data = {
-            "status": Status.CHANGE_CHAT_ROOM,
-            "user_id": user_id,
-            "msg": f"====entered {chat_room_id}====="
-        }
+        data = put_change_chat_room_response_data(user_id, chat_room_id)
         self.send_queue.put(data)
 
     def put_send_message_response(self, received_data_json):
         user_id = received_data_json["user_id"]
-        data = {
-            "status": Status.SEND_MESSAGE,
-            "user_id": user_id,
-            "msg": received_data_json["msg"],
-            "chat_room_id": received_data_json["chat_room_id"],
-        }
+        data = put_send_message_response_data(received_data_json)
         chat_room_id = received_data_json["chat_room_id"]
         add_msg_in_chatroom(received_data_json)
         self.send_queue.put(data)
