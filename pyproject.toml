@@ -12,6 +12,7 @@ pymongo = "^3.11.3"
 docopt = "^0.6.2"
 websocket = "^0.2.1"
 websockets = "^8.1"
+uvicorn = "^0.13.4"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"

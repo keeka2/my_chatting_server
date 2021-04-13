@@ -16,4 +16,4 @@ RUN apt-get install -y tzdata
 COPY * /app/
 EXPOSE 8081
 # docker run --rm -p 8081:8081 --name chatting_server chatting poetry run python -m server
-# docker run --rm -p 8081:8081 --name chatting_client chatting poetry run python -m client
+# docker run --rm -p 8081:8081 --name chatting_client chatting poetry run python -m client_web_socket

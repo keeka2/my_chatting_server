@@ -11,7 +11,6 @@ from data_util.client_request_data import get_init_data_request_data, get_send_m
 
 class Client:
     user_id = None
-    socket_port = 9000
     cur_chatroom = None
     chat_room_list = []
     chat_room_msg_dict = {}
@@ -37,7 +36,7 @@ class Client:
 
     async def my_connect(self):
         # 웹 소켓에 접속을 합니다.
-        async with websockets.connect("ws://localhost:9998") as websocket:
+        async with websockets.connect("ws://192.168.35.191:9998") as websocket:
             # 10번을 반복하면서 웹 소켓 서버로 메시지를 전송합니다.
             await websocket.send(self.user_id)
             msg = await websocket.recv()
