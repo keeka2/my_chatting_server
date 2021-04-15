@@ -1,6 +1,7 @@
 import asyncio
 # 웹 소켓 모듈을 선언한다.
 import json
+import threading
 
 import websockets
 
@@ -24,9 +25,8 @@ class Client:
                 break
             except:
                 print("wrong input retry")
-        # 시작시 사용자 데이터 초기화 - websocket 아닌 api 요청
         self.init_user_data()
-        asyncio.get_event_loop().run_until_complete(self.my_connect())
+        asyncio.get_event_loop().run_until_complete(self.connect())
 
     def init_user_data(self):
         # api 요청
@@ -34,19 +34,42 @@ class Client:
         self.chat_room_list = init_data["chat_room_list"]
         self.chat_room_msg_dict = init_data["chat_room_msg_dict"]
 
-    async def my_connect(self):
-        # 웹 소켓에 접속을 합니다.
-        async with websockets.connect("ws://192.168.35.191:9998") as websocket:
-            # 10번을 반복하면서 웹 소켓 서버로 메시지를 전송합니다.
-            await websocket.send(self.user_id)
-            msg = await websocket.recv()
-            print(msg)
+    async def handshake(self, websocket):
+        await websocket.send(self.user_id)
+        msg = await websocket.recv()
+        print(msg)
 
-            while True:
-                if not self.cur_chatroom:
-                    await self.set_chatroom()
+    async def connect(self):
+        async with websockets.connect("ws://192.168.35.252:9998") as websocket:
+            await self.handshake(websocket)
+            await self.client_start(websocket)
+
+    async def client_start(self, websocket):
+        task1 = asyncio.ensure_future(self.send_server(websocket))
+        task2 = asyncio.ensure_future(self.receive_server(websocket))
+        done, pending = await asyncio.wait(
+            [task1, task2],
+            return_when=asyncio.FIRST_COMPLETED,
+        )
+        for task in pending:
+            task.cancel()
+
+    async def send_server(self, websocket):
+        while True:
+            await self.set_chatroom()
+            while self.cur_chatroom:
                 await self.my_send(websocket)
-                await self.my_received(websocket)
+                await asyncio.sleep(1)
+
+    async def receive_server(self, websocket):
+        while True:
+            receive_data = await websocket.recv()
+            received_data_json = json.loads(receive_data)
+            received_data_json = json.loads(received_data_json)
+            received_status = received_data_json["status"]
+            if received_status == Status.SEND_MESSAGE:
+                await self.handle_received_message(received_data_json)
+            await asyncio.sleep(1)
 
     async def set_chatroom(self):
         while True:
@@ -77,14 +100,6 @@ class Client:
             # send data: json 형식의 string format
             send_data = get_send_message_request_data(self.user_id, self.cur_chatroom, msg)
             await websocket.send(send_data)
-
-    async def my_received(self, websocket):
-        receive_data = await websocket.recv()
-        received_data_json = json.loads(receive_data)
-        received_status = received_data_json["status"]
-        if received_status == Status.SEND_MESSAGE:
-            await self.handle_received_message(received_data_json)
-        print(receive_data)
 
     async def handle_received_message(self, received_data_json):
         user_id = received_data_json["user_id"]
