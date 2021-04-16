@@ -12,5 +12,5 @@ docker build -t chatting .
 docker run --rm -p 8081:8081 --name chatting_server chatting poetry run python -m server_web_socket
 
 #client
-docker run --rm -p 8081:8081 --name chatting_server chatting poetry run python -m client_web_socket
+docker run --rm -p 8081:8081 --name chatting_client chatting poetry run python -m client_web_socket
 </pre>
