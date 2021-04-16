@@ -15,7 +15,7 @@ class Singleton(type):
 
 
 class RedisClient(metaclass=Singleton):
-    HOST = "127.0.0.1"
+    HOST = "192.168.35.169"
     PORT = 6379
 
     def __init__(self):

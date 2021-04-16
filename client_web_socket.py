@@ -1,118 +1,95 @@
-import asyncio
-# 웹 소켓 모듈을 선언한다.
 import json
-import threading
 
-import websockets
-
-from api_server import get_client_init_data
+import websocket
 from const import Status
-from data_util.client_request_data import get_init_data_request_data, get_send_message_request_data
+
+try:
+    import thread
+except ImportError:
+    import _thread as thread
+import time
+
+cur_chatroom = None
+user_id = None
+chat_room_list = []
 
 
-class Client:
-    user_id = None
-    cur_chatroom = None
-    chat_room_list = []
-    chat_room_msg_dict = {}
+def on_message(ws, message):
+    received_data_json = json.loads(message)
+    user_id = received_data_json["user_id"]
+    msg = received_data_json["msg"]
+    chat_room_id = received_data_json["chat_room_id"]
+    if cur_chatroom == chat_room_id:
+        print(user_id, ":", msg)
 
-    def start(self):
+
+def on_error(ws, error):
+    print(error)
+
+
+def on_close(ws):
+    print("closed")
+
+
+def on_open(ws):
+    print(user_id, "entered")
+    ws.send(user_id)
+
+    def run(*args):
+        global cur_chatroom
         while True:
-            try:
-                user_id = int(input("my user id(int):"))
-                user_id = str(user_id)
-                self.user_id = user_id
-                break
-            except:
-                print("wrong input retry")
-        self.init_user_data()
-        asyncio.get_event_loop().run_until_complete(self.connect())
-
-    def init_user_data(self):
-        # api 요청
-        init_data = get_client_init_data(self.user_id)
-        self.chat_room_list = init_data["chat_room_list"]
-        self.chat_room_msg_dict = init_data["chat_room_msg_dict"]
-
-    async def handshake(self, websocket):
-        await websocket.send(self.user_id)
-        msg = await websocket.recv()
-        print(msg)
-
-    async def connect(self):
-        async with websockets.connect("ws://192.168.35.252:9998") as websocket:
-            await self.handshake(websocket)
-            await self.client_start(websocket)
-
-    async def client_start(self, websocket):
-        task1 = asyncio.ensure_future(self.send_server(websocket))
-        task2 = asyncio.ensure_future(self.receive_server(websocket))
-        done, pending = await asyncio.wait(
-            [task1, task2],
-            return_when=asyncio.FIRST_COMPLETED,
-        )
-        for task in pending:
-            task.cancel()
-
-    async def send_server(self, websocket):
-        while True:
-            await self.set_chatroom()
-            while self.cur_chatroom:
-                await self.my_send(websocket)
-                await asyncio.sleep(1)
-
-    async def receive_server(self, websocket):
-        while True:
-            receive_data = await websocket.recv()
-            received_data_json = json.loads(receive_data)
-            received_data_json = json.loads(received_data_json)
-            received_status = received_data_json["status"]
-            if received_status == Status.SEND_MESSAGE:
-                await self.handle_received_message(received_data_json)
-            await asyncio.sleep(1)
-
-    async def set_chatroom(self):
-        while True:
-            chat_room_id = input("select or make new chat room(int):")
-            try:
-                integer_check = int(chat_room_id)
-                self.cur_chatroom = chat_room_id
-                if self.cur_chatroom in self.chat_room_msg_dict:
-                    for chat_data in self.chat_room_msg_dict[self.cur_chatroom]:
-                        print(chat_data["user_id"], ":", chat_data["msg"])
+            while True:
+                chat_room_id = input("select or make new chat room(int):")
+                try:
+                    integer_check = int(chat_room_id)
+                    cur_chatroom = chat_room_id
+                    print(f"entered room: {chat_room_id}")
+                    break
+                except Exception as e:
+                    print(e)
+                    print("wrong input retry")
+                    pass
+            while True:
+                msg = input()
+                if msg == "*exit*":
+                    cur_chatroom = None
+                    break
+                elif msg:
+                    request_data = {
+                            "status": Status.SEND_MESSAGE,
+                            "user_id": user_id,
+                            "chat_room_id": cur_chatroom,
+                            "msg": msg,
+                        }
+                    send_data = json.dumps(request_data)
+                    print(send_data)
+                    ws.send(send_data)
                 else:
-                    self.chat_room_list.append(self.cur_chatroom)
-                    self.chat_room_msg_dict[self.cur_chatroom] = []
-                break
-            except Exception as e:
-                print(e)
-                print("wrong input retry")
-                pass
+                    time.sleep(1)
+                    pass
+            time.sleep(1)
+            ws.close()
+            print("thread terminating...")
+            break
 
-        print(f"entered {chat_room_id}")
-        print(f"if you want to change chat room input *exit* and press enter")
-
-    async def my_send(self, websocket):
-        msg = input()
-        if msg == "*exit*":
-            self.cur_chatroom = None
-        elif msg:
-            # send data: json 형식의 string format
-            send_data = get_send_message_request_data(self.user_id, self.cur_chatroom, msg)
-            await websocket.send(send_data)
-
-    async def handle_received_message(self, received_data_json):
-        user_id = received_data_json["user_id"]
-        msg = received_data_json["msg"]
-        chat_room_id = received_data_json["chat_room_id"]
-        if self.cur_chatroom == chat_room_id:
-            print(user_id, ":", msg)
-        del received_data_json["status"]
-        del received_data_json["chat_room_id"]
-        self.chat_room_msg_dict[chat_room_id].append(received_data_json)
+    thread.start_new_thread(run, ())
 
 
-# 비동기로 서버에 접속한다.
 if __name__ == "__main__":
-    client = Client()
-    client.start()
+    while True:
+        try:
+            port = int(input("server port:"))
+            break
+        except:
+            print("try_again")
+
+    uid = input("my user id:")
+    user_id = uid
+    websocket.enableTrace(True)
+    ws = websocket.WebSocketApp(f"ws://192.168.35.169:{port}",
+                                on_open=on_open,
+                                on_message=on_message,
+                                on_error=on_error,
+                                on_close=on_close)
+
+    ws.run_forever()

@@ -13,6 +13,8 @@ docopt = "^0.6.2"
 websocket = "^0.2.1"
 websockets = "^8.1"
 uvicorn = "^0.13.4"
+websocket-client = "^0.58.0"
+"backports.ssl_match_hostname" = "^3.7.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
