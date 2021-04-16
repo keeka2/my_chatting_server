@@ -9,8 +9,8 @@ cd my_chatting_server
 docker build -t chatting .
 
 # server
-docker run --rm -p 8081:8081 --name chatting_server chatting poetry run python -m server_web_socket
+docker run -it --rm chatting /bin/bash -c "poetry run python server_web_socket.py"
 
 #client
-docker run --rm -p 8081:8081 --name chatting_client chatting poetry run python -m client_web_socket
+docker run -it --rm chatting /bin/bash -c "poetry run python client_web_socket.py"
 </pre>
