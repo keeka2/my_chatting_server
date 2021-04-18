@@ -1,7 +1,7 @@
 import json
-
+import requests
 import websocket
-from const import Status
+from const import Status, MyServer
 from redis_database import get_server_list
 
 try:
@@ -77,27 +77,34 @@ def on_open(ws):
 
 
 if __name__ == "__main__":
-    server_list = get_server_list()
-    for idx in range(len(server_list)):
-        print(idx + 1, ":", server_list[idx])
-    while True:
-        try:
-            server_idx = int(input("select server: "))
-            if 0 <= server_idx - 1 < len(server_list):
-                server = server_list[server_idx - 1]
-                websocket_url = f"ws://{server}"
-                print(f"connected to {websocket_url}")
-                break
-        except:
-            print("wrong input try again")
+    print(f"http://{MyServer.HOST}/get/server_list")
+    resp = requests.get(f"http://{MyServer.HOST}/get/server_list")
+    if resp:
+        server_list = resp.json()["server_list"]
+        print(server_list)
+        for idx in range(len(server_list)):
+            print(idx + 1, ":", server_list[idx])
+        while True:
+            try:
+                server_idx = int(input("select server: "))
+                if 0 <= server_idx - 1 < len(server_list):
+                    server = server_list[server_idx - 1]
+                    websocket_url = f"ws://{server}"
+                    print(f"connected to {websocket_url}")
+                    break
+            except:
+                print("wrong input try again")
 
-    uid = input("my user id:")
-    user_id = uid
-    websocket.enableTrace(True)
-    ws = websocket.WebSocketApp(websocket_url,
-                                on_open=on_open,
-                                on_message=on_message,
-                                on_error=on_error,
-                                on_close=on_close)
+        uid = input("my user id:")
+        user_id = uid
+        websocket.enableTrace(True)
+        ws = websocket.WebSocketApp(websocket_url,
+                                    on_open=on_open,
+                                    on_message=on_message,
+                                    on_error=on_error,
+                                    on_close=on_close)
 
-    ws.run_forever()
+        ws.run_forever()
+    else:
+        print("api server error")
+

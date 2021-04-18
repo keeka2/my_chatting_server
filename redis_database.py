@@ -9,6 +9,7 @@ def add_server(host, port):
     key = "server_list"
     value = f"{host}:{port}"
     client.conn.rpush(key, value)
+    print("add server_list", value)
 
 
 def get_server_list():
