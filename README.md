@@ -8,8 +8,7 @@ cd my_chatting_server
 # build docker
 docker build -t chatting .
 
-# Setting
-const.py 에서
+# Setting - const.py
 Server.HOST : 실행할 서버의 ip로 변경 (ex: 127.0.0.1)
 Server.REDIS_HOST : redis HOST 주소 변경 (ex: 127.0.0.1)
 
