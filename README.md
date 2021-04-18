@@ -1,6 +1,6 @@
 ### Installation
 <pre>
-git clone 
+git clone https://github.com/keeka2/my_chatting_server.git
 cd my_chatting_server
 </pre>
 ### Run
@@ -8,14 +8,16 @@ cd my_chatting_server
 # build docker
 docker build -t chatting .
 
-# 공통
-서버로 사용할 ip 변경, redis_util에서 redis 주소 변경
+# Setting
+const.py 에서
+Server.HOST : 실행할 서버의 ip로 변경 (ex: 127.0.0.1)
+Server.REDIS_HOST : redis HOST 주소 변경 (ex: 127.0.0.1)
 
 # server
-docker run -it --rm chatting /bin/bash -c "poetry run python server_web_socket.py"
-사용할 포트 입력
+docker run -p [port]:10000 -it --rm chatting /bin/bash -c "poetry run python server_web_socket.py port=[port]" 
+
+ex] docker run -p 10002:10000 -it --rm chatting /bin/bash -c "poetry run python server_web_socket.py port=10002"
 
 #client
 docker run -it --rm chatting /bin/bash -c "poetry run python client_web_socket.py"
-사용할 서버주소의 포트 입력
 </pre>
