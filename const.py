@@ -4,3 +4,8 @@ class Status:
     CHANGE_CHAT_ROOM = "change_chat_room"
     SEND_MESSAGE = "send_message"
     CLOSE_CONNECTION = "close_connection"
+
+# EDIT PLEASE
+class MyServer:
+    HOST = ""
+    REDIS_HOST = ""

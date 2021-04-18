@@ -1,5 +1,7 @@
 import redis
 
+from const import MyServer
+
 
 class Singleton(type):
     """
@@ -15,7 +17,7 @@ class Singleton(type):
 
 
 class RedisClient(metaclass=Singleton):
-    HOST = "192.168.35.169"
+    HOST = MyServer.REDIS_HOST
     PORT = 6379
 
     def __init__(self):
