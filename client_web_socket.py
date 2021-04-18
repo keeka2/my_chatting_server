@@ -2,6 +2,7 @@ import json
 
 import websocket
 from const import Status
+from redis_database import get_server_list
 
 try:
     import thread
@@ -56,11 +57,11 @@ def on_open(ws):
                     break
                 elif msg:
                     request_data = {
-                            "status": Status.SEND_MESSAGE,
-                            "user_id": user_id,
-                            "chat_room_id": cur_chatroom,
-                            "msg": msg,
-                        }
+                        "status": Status.SEND_MESSAGE,
+                        "user_id": user_id,
+                        "chat_room_id": cur_chatroom,
+                        "msg": msg,
+                    }
                     send_data = json.dumps(request_data)
                     print(send_data)
                     ws.send(send_data)
@@ -76,17 +77,24 @@ def on_open(ws):
 
 
 if __name__ == "__main__":
+    server_list = get_server_list()
+    for idx in range(len(server_list)):
+        print(idx + 1, ":", server_list[idx])
     while True:
         try:
-            port = int(input("server port:"))
-            break
+            server_idx = int(input("select server: "))
+            if 0 <= server_idx - 1 < len(server_list):
+                server = server_list[server_idx - 1]
+                websocket_url = f"ws://{server}"
+                print(f"connected to {websocket_url}")
+                break
         except:
-            print("try_again")
+            print("wrong input try again")
 
     uid = input("my user id:")
     user_id = uid
     websocket.enableTrace(True)
-    ws = websocket.WebSocketApp(f"ws://192.168.35.169:{port}",
+    ws = websocket.WebSocketApp(websocket_url,
                                 on_open=on_open,
                                 on_message=on_message,
                                 on_error=on_error,
