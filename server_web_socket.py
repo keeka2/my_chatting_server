@@ -1,26 +1,26 @@
 import asyncio
 # 웹 소켓 모듈을 선언한다.
+import sys
 import json
-
+import socket
 import websockets
-
-# 클라이언트 접속이 되면 호출된다.
-from const import Status
+from const import Status, MyServer
 from redis_database import set_client_server, get_send_people_list, update_chat_room, put_message_for_other_server, \
-    get_message_to_send, close_connection, get_client_server
+    get_message_to_send, close_connection, get_client_server, add_server
 
 
 class Server:
-    def __init__(self, port):
+    def __init__(self, host, port=10000):
         self.on_server_client = {}
         self.chat_room_user_id_list = {}
         self.all_chatroom = {}
-        self.host = "192.168.35.169"
+        self.host = host
+        self.container_port = 10000
         self.port = port
+        add_server(MyServer.HOST, port)
 
     def start(self):
-        # 서버 데이터 초기화
-        start_server = websockets.serve(self.receive_handler, self.host, self.port)
+        start_server = websockets.serve(self.receive_handler, self.host, self.container_port)
         # 비동기로 서버를 대기한다.
         asyncio.get_event_loop().run_until_complete(start_server)
         asyncio.get_event_loop().run_forever()
@@ -82,18 +82,17 @@ class Server:
         chat_room_id = received_data_json["chat_room_id"]
         send_people_list = get_send_people_list(chat_room_id)
         v = {}
-        USERS = []
+        futures = []
         not_send_list = []
         print(send_people_list)
         for user in send_people_list:
-            if user not in v:
-                if user in self.on_server_client:
-                    v[user] = True
-                    ws = self.on_server_client[user]
-                    USERS.append(user)
-                    await ws.send(received_data_raw)
-                else:
-                    not_send_list.append(user)
+            if user not in v and user in self.on_server_client:
+                v[user] = True
+                ws = self.on_server_client[user]
+                futures.append(asyncio.ensure_future(ws.send(received_data_raw)))
+            else:
+                not_send_list.append(user)
+
         if not_send_list:
             for user in not_send_list:
                 server_url = get_client_server(user)
@@ -102,6 +101,7 @@ class Server:
                     "received_data_raw": received_data_raw,
                 }
                 put_message_for_other_server(json.dumps(data), server_url)
+        await asyncio.gather(*futures)
 
     async def broadcast(self):
         while True:
@@ -124,13 +124,21 @@ class Server:
         return True
 
 
-# 비동기로 서버에 시한다.
 if __name__ == "__main__":
-    while True:
-        try:
-            port = int(input("server port:"))
-            break
-        except:
-            print("try_again")
-    server = Server(port)
-    server.start()
+    try:
+        if len(sys.argv) == 2:
+            port = sys.argv[1].split("=")[1]
+            port = int(port)
+
+            # 컨테이너의 ip 받아와서 host 설정
+            host = socket.gethostbyname(socket.getfqdn())
+            print(host, port)
+            server = Server(host, port)
+            server.start()
+        else:
+            print('start again ex)')
+            print(
+                'docker run -p [my_port]:10000 -it --rm chatting /bin/bash -c "poetry run python server_web_socket.py port=[my_port]"')
+    except Exception as e:
+        print(e)
+        pass
