@@ -5,6 +5,18 @@ from redis_util import RedisClient
 client = RedisClient()
 
 
+def add_server(host, port):
+    key = "server_list"
+    value = f"{host}:{port}"
+    client.conn.rpush(key, value)
+
+
+def get_server_list():
+    key = "server_list"
+    value = client.conn.lrange(key, 0, -1)
+    return list(map(bytes.decode, value))
+
+
 def set_client_server(user_id, host, port):
     set_key = f"{user_id}_server"
     set_value = f"{host}:{port}"
