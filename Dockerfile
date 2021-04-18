@@ -14,3 +14,4 @@ RUN poetry install -n
 RUN apt-get install -y tzdata
 
 COPY * /app/
+EXPOSE 80
