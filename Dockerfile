@@ -15,3 +15,4 @@ RUN apt-get install -y tzdata
 
 COPY * /app/
 EXPOSE 80
+EXPOSE 10000
