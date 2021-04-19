@@ -17,11 +17,13 @@ class Server:
         self.host = host
         self.container_port = 10000
         self.port = port
+
+        # 서버가 실행되면 서버 주소 저장(클라이언트 접속시 서버 선택 가능)
         add_server(MyServer.HOST, port)
 
     def start(self):
         start_server = websockets.serve(self.receive_handler, self.host, self.container_port)
-        # 비동기로 서버를 대기한다.
+        # async로 선언되지 않은 일반 동기 함수 내에서 비동기 함수를 호출
         asyncio.get_event_loop().run_until_complete(start_server)
         asyncio.get_event_loop().run_forever()
 
@@ -57,7 +59,10 @@ class Server:
                 received_data_json = json.loads(received_data_raw)
                 status = received_data_json["status"]
                 del received_data_json["status"]
-                if status == Status.SEND_MESSAGE:
+                if status == Status.CHANGE_CHAT_ROOM:
+                    await self.enter_chat_room(received_data_json)
+                    await self.handle_received_message(received_data_json)
+                elif status == Status.SEND_MESSAGE:
                     await self.handle_received_message(received_data_json)
             else:
                 receive_task.cancel()
@@ -76,14 +81,11 @@ class Server:
 
     async def handle_received_message(self, received_data_json):
         received_data_raw = json.dumps(received_data_json)
-        await self.enter_chat_room(received_data_json)
-        user_id = received_data_json["user_id"]
-        msg = received_data_json["msg"]
         chat_room_id = received_data_json["chat_room_id"]
         send_people_list = get_send_people_list(chat_room_id)
         v = {}
+        # 퓨처(asyncio.Future)는 미래에 할 일을 표현하는 클래스인데 할 일을 취소하거나 상태 확인, 완료 및 결과 설정에 사용
         futures = []
-        not_send_list = []
         print(send_people_list)
         for user in send_people_list:
             if user not in v and user in self.on_server_client:
@@ -91,10 +93,6 @@ class Server:
                 ws = self.on_server_client[user]
                 futures.append(asyncio.ensure_future(ws.send(received_data_raw)))
             else:
-                not_send_list.append(user)
-
-        if not_send_list:
-            for user in not_send_list:
                 server_url = get_client_server(user)
                 data = {
                     "user_id": user,
