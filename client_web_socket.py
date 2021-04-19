@@ -45,6 +45,14 @@ def on_open(ws):
                     integer_check = int(chat_room_id)
                     cur_chatroom = chat_room_id
                     print(f"entered room: {chat_room_id}")
+                    request_data = {
+                        "status": Status.CHANGE_CHAT_ROOM,
+                        "user_id": user_id,
+                        "chat_room_id": cur_chatroom,
+                        "msg": f"{user_id} entered {cur_chatroom}",
+                    }
+                    send_data = json.dumps(request_data)
+                    ws.send(send_data)
                     break
                 except Exception as e:
                     print(e)
@@ -55,6 +63,16 @@ def on_open(ws):
                 if msg == "*exit*":
                     cur_chatroom = None
                     break
+                elif msg =="stress_test":
+                    for i in range(1000):
+                        request_data = {
+                            "status": Status.SEND_MESSAGE,
+                            "user_id": user_id,
+                            "chat_room_id": cur_chatroom,
+                            "msg": f"{msg}_{i}",
+                        }
+                        send_data = json.dumps(request_data)
+                        ws.send(send_data)
                 elif msg:
                     request_data = {
                         "status": Status.SEND_MESSAGE,
@@ -63,7 +81,6 @@ def on_open(ws):
                         "msg": msg,
                     }
                     send_data = json.dumps(request_data)
-                    print(send_data)
                     ws.send(send_data)
                 else:
                     time.sleep(1)
